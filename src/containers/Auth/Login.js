@@ -10,8 +10,7 @@ import passIcon from '../../assets/images/pass.svg';
 import './Login.scss';
 import { FormattedMessage } from 'react-intl';
 
-import adminService from '../../services/adminService';
-import userService from '../../services/userService'
+import { handleLogin } from '../../services/userService'
 
 class Login extends Component {
     constructor(props) {
@@ -49,29 +48,46 @@ class Login extends Component {
         navigate(`${redirectPath}`);
     }
 
-    processLogin = () => {
+    processLogin = async () => {
         const { username, password } = this.state;
+        this.setState({
+            loginError: ""
+        })
 
-        const { adminLoginSuccess, adminLoginFail } = this.props;
-        let loginBody = {
-            username: 'admin',
-            password: '123456'
-        }
-        //sucess
-        let adminInfo = {
-            "tlid": "0",
-            "tlfullname": "Administrator",
-            "custype": "A",
-            "accessToken": "eyJhbGciOiJIU"
-        }
-
-        adminLoginSuccess(adminInfo);
-        this.refresh();
-        this.redirectToSystemPage();
+        const { userLoginSuccess, userLoginFail } = this.props;
         try {
-            adminService.login(loginBody)
+
+            let data = await handleLogin(this.state.username, this.state.password)
+
+            if (data && data.errCode !== 0){
+                this.setState({
+                    loginError: data.message
+                })
+                userLoginFail()
+            }
+
+            if (data && data.errCode == 0){
+                console.log('vao day roi')
+                let adminInfo = {
+                    "tlid": "0",
+                    "tlfullname": "Administrator",
+                    "custype": "A",
+                    "accessToken": "eyJhbGciOiJIU"
+                }
+
+                userLoginSuccess(data.data);
+                this.refresh();
+                // this.redirectToSystemPage();
+            }
         } catch (e) {
-            console.log('error login : ', e)
+            if(e.response){
+                if(e.response.data){
+                    this.setState({
+                        loginError: e.response.data.message
+                    })
+                    userLoginFail()
+                }
+            }
         }
 
     }
@@ -166,8 +182,8 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => {
     return {
         navigate: (path) => dispatch(push(path)),
-        adminLoginSuccess: (adminInfo) => dispatch(actions.adminLoginSuccess(adminInfo)),
-        adminLoginFail: () => dispatch(actions.adminLoginFail()),
+        userLoginSuccess: (userInfo) => dispatch(actions.userLoginSuccess(userInfo)),
+        userLoginFail: () => dispatch(actions.userLoginFail()),
     };
 };
 
