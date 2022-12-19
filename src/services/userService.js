@@ -1,7 +1,10 @@
 import axios from "../axios"
 const handleLogin = ( username, password ) => {
-  console.log(username,password)
   return axios.post('/api/login', {email: username, password: password})
 }
 
-export {handleLogin}
+const getAllUsers = (inputId) => {
+  return axios.get(`/api/get-all-users?id=${inputId}`)
+}
+
+export {handleLogin,getAllUsers}
